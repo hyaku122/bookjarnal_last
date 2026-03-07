@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="bg" x1="20" y1="12" x2="168" y2="178" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffd0e0" />
+      <stop offset="1" stop-color="#c8efff" />
+    </linearGradient>
+    <linearGradient id="book" x1="58" y1="44" x2="132" y2="146" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff8ff" />
+      <stop offset="1" stop-color="#ffeef7" />
+    </linearGradient>
+  </defs>
+  <rect x="6" y="6" width="180" height="180" rx="44" fill="url(#bg)" />
+  <circle cx="150" cy="42" r="12" fill="#ffd86f" />
+  <circle cx="43" cy="52" r="8" fill="#b4f0d3" />
+  <circle cx="35" cy="146" r="10" fill="#d8c9ff" />
+  <path d="M58 50h33c9 0 16 7 16 16v78H74c-9 0-16-7-16-16V50z" fill="url(#book)" stroke="#e59cb8" stroke-width="4" />
+  <path d="M134 50h-33c-9 0-16 7-16 16v78h33c9 0 16-7 16-16V50z" fill="url(#book)" stroke="#88b8de" stroke-width="4" />
+  <path d="M96 62v72" stroke="#d8a4be" stroke-width="4" stroke-linecap="round" />
+  <path d="M64 74h20M64 90h20M64 106h20M108 74h20M108 90h20M108 106h20" stroke="#b7c6d8" stroke-width="3.5" stroke-linecap="round" />
+</svg>

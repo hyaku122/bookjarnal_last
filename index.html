@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#ffc2d4">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="読書感想ジャーナル">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/icon-192.svg">
+    <link rel="stylesheet" href="styles.css">
+    <title>読書感想ジャーナル</title>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="top-bar">
+        <button id="backButton" class="circle-button back-button hidden" type="button" aria-label="戻る">←</button>
+        <h1 id="headerTitle" class="header-title">読書感想ジャーナル</h1>
+        <nav id="topActions" class="top-actions" aria-label="操作メニュー">
+          <button id="addBookButton" class="circle-button icon-edit" type="button" aria-label="新規入力">
+            <span aria-hidden="true">✏️</span>
+          </button>
+          <button id="checkUpdateButton" class="circle-button icon-refresh" type="button" aria-label="更新確認">
+            <span aria-hidden="true">🔄</span>
+          </button>
+          <button id="openSettingsButton" class="circle-button icon-settings" type="button" aria-label="設定">
+            <span aria-hidden="true">⚙️</span>
+          </button>
+        </nav>
+      </header>
+
+      <main class="main-content">
+        <section id="listView" class="view-screen" aria-label="本一覧">
+          <p id="emptyMessage" class="empty-message hidden">
+            まだ記録がありません。右上の鉛筆アイコンから追加できます。
+          </p>
+          <div id="bookListContainer" class="book-list"></div>
+        </section>
+
+        <section id="formView" class="view-screen hidden" aria-label="入力と編集">
+          <form id="bookForm" class="panel" novalidate>
+            <h2 id="formTitle" class="panel-title">新しい記録</h2>
+            <p id="formError" class="form-error hidden" role="alert"></p>
+
+            <label class="field-label" for="startDateInput">読み始めた日（必須）</label>
+            <input id="startDateInput" class="field-input" type="date" required>
+
+            <label class="field-label" for="endDateInput">読み終わった日（任意）</label>
+            <input id="endDateInput" class="field-input" type="date">
+
+            <label class="field-label" for="titleInput">題名（必須）</label>
+            <input id="titleInput" class="field-input" type="text" maxlength="120" required placeholder="例: 吾輩は猫である">
+
+            <label class="field-label" for="authorInput">著者名</label>
+            <input id="authorInput" class="field-input" type="text" maxlength="120" placeholder="例: 夏目漱石">
+
+            <label class="field-label" for="reviewInput">感想</label>
+            <textarea id="reviewInput" class="field-textarea" rows="6" maxlength="8000" placeholder="読んで感じたことを自由にメモ"></textarea>
+
+            <label class="field-label" for="photoInput">写真（最大10枚、保存前に1MB目安へ圧縮）</label>
+            <input id="photoInput" class="field-input" type="file" accept="image/*" multiple>
+            <ul id="photoPreviewList" class="photo-preview-list"></ul>
+
+            <div class="button-row">
+              <button id="saveButton" class="pill-button primary" type="submit">保存</button>
+              <button id="deleteFromFormButton" class="pill-button danger hidden" type="button">削除</button>
+            </div>
+          </form>
+        </section>
+
+        <section id="detailView" class="view-screen hidden" aria-label="詳細">
+          <article class="panel">
+            <h2 class="panel-title">記録の詳細</h2>
+            <dl class="detail-list">
+              <div class="detail-row">
+                <dt>読み始めた日</dt>
+                <dd id="detailStartDate"></dd>
+              </div>
+              <div class="detail-row">
+                <dt>読み終わった日</dt>
+                <dd id="detailEndDate"></dd>
+              </div>
+              <div class="detail-row">
+                <dt>日数</dt>
+                <dd id="detailDays"></dd>
+              </div>
+              <div class="detail-row">
+                <dt>題名</dt>
+                <dd id="detailTitle"></dd>
+              </div>
+              <div class="detail-row">
+                <dt>著者名</dt>
+                <dd id="detailAuthor"></dd>
+              </div>
+              <div class="detail-row review-row">
+                <dt>感想</dt>
+                <dd id="detailReview"></dd>
+              </div>
+            </dl>
+
+            <h3 class="photo-title">写真</h3>
+            <div id="detailPhotoGrid" class="detail-photo-grid"></div>
+
+            <div class="button-row">
+              <button id="detailEditButton" class="pill-button secondary" type="button">編集</button>
+              <button id="detailDeleteButton" class="pill-button danger" type="button">削除</button>
+            </div>
+          </article>
+        </section>
+
+        <section id="settingsView" class="view-screen hidden" aria-label="設定">
+          <section class="panel">
+            <h2 class="panel-title">バックアップ</h2>
+            <p class="settings-note">文字列形式で書き出し・復元できます。</p>
+
+            <label class="field-label" for="backupOutput">バックアップ文字列</label>
+            <textarea id="backupOutput" class="field-textarea mono-text" rows="6" readonly></textarea>
+            <div class="button-row">
+              <button id="generateBackupButton" class="pill-button primary" type="button">文字列作成</button>
+              <button id="copyBackupButton" class="pill-button secondary" type="button">文字列コピー</button>
+            </div>
+
+            <label class="field-label" for="restoreInput">復元用文字列</label>
+            <textarea id="restoreInput" class="field-textarea mono-text" rows="6" placeholder="BOOKJOURNAL1:..."></textarea>
+            <button id="restoreButton" class="pill-button danger full-width" type="button">貼り付け文字列から復元（全置換え）</button>
+            <p id="settingsError" class="form-error hidden" role="alert"></p>
+          </section>
+
+          <section id="updatePanel" class="panel update-panel">
+            <h2 class="panel-title">アプリ更新</h2>
+            <p id="updateStatusText" class="update-status">更新状態を確認中です。</p>
+            <button id="applyUpdateButton" class="pill-button primary full-width" type="button" disabled>更新する</button>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <div id="photoModal" class="photo-modal hidden" role="dialog" aria-modal="true" aria-label="写真拡大表示">
+      <button id="closePhotoModalButton" class="close-modal-button" type="button" aria-label="閉じる">×</button>
+      <img id="photoModalImage" class="photo-modal-image" alt="拡大写真">
+    </div>
+
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>
