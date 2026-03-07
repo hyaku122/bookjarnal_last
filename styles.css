@@ -89,7 +89,8 @@ button {
 .top-actions {
   display: flex;
   gap: 8px;
-  justify-content: flex-start;
+  justify-content: flex-end;
+  margin-left: auto;
 }
 
 .circle-button {
