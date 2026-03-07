@@ -1058,7 +1058,7 @@ async function refreshUpdatePanel() {
 
 async function checkForUpdateFromTopButton() {
   if (!state.swRegistration) {
-    showToast("更新確認に対応していません");
+    window.location.reload();
     return;
   }
 
@@ -1071,8 +1071,19 @@ async function checkForUpdateFromTopButton() {
   await refreshUpdatePanel();
   if (state.swUpdateReady) {
     await applyServiceWorkerUpdate();
+    return;
+  }
+
+  const refreshed = await refreshAppShellViaMessage();
+  if (refreshed) {
+    showToast("最新版を読み込みます");
+    window.setTimeout(() => {
+      window.location.reload();
+    }, 250);
   } else if (state.swRegistration.installing) {
     showToast("更新をダウンロード中です");
+  } else if (!navigator.onLine) {
+    showToast("オフラインのため更新できません");
   } else {
     showToast("現在は最新です");
   }
@@ -1091,4 +1102,38 @@ async function applyServiceWorkerUpdate() {
   }
 
   state.swRegistration.waiting.postMessage({ type: "SKIP_WAITING" });
+}
+
+function postMessageToWorker(worker, message, timeoutMs = 8000) {
+  return new Promise((resolve, reject) => {
+    const channel = new MessageChannel();
+    const timer = window.setTimeout(() => {
+      reject(new Error("Service Worker response timeout"));
+    }, timeoutMs);
+
+    channel.port1.onmessage = (event) => {
+      window.clearTimeout(timer);
+      resolve(event.data);
+    };
+
+    worker.postMessage(message, [channel.port2]);
+  });
+}
+
+async function refreshAppShellViaMessage() {
+  if (!state.swRegistration) {
+    return false;
+  }
+  const worker = state.swRegistration.active || navigator.serviceWorker.controller;
+  if (!worker) {
+    return false;
+  }
+
+  try {
+    const response = await postMessageToWorker(worker, { type: "REFRESH_APP_SHELL" });
+    return Boolean(response && response.ok);
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
 }

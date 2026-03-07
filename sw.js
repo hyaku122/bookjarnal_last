@@ -11,10 +11,22 @@ const APP_SHELL = [
   "./icons/icon-512.svg"
 ];
 
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => cache.addAll(APP_SHELL))
+async function refreshAppShellCache() {
+  const cache = await caches.open(STATIC_CACHE);
+  await Promise.all(
+    APP_SHELL.map(async (path) => {
+      const request = new Request(path, { cache: "no-store" });
+      const response = await fetch(request);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${path}`);
+      }
+      await cache.put(path, response.clone());
+    })
   );
+}
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(refreshAppShellCache());
 });
 
 self.addEventListener("activate", (event) => {
@@ -76,5 +88,21 @@ self.addEventListener("fetch", (event) => {
 self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "SKIP_WAITING") {
     self.skipWaiting();
+  }
+  if (event.data && event.data.type === "REFRESH_APP_SHELL") {
+    const port = event.ports && event.ports[0];
+    event.waitUntil(
+      refreshAppShellCache()
+        .then(() => {
+          if (port) {
+            port.postMessage({ ok: true });
+          }
+        })
+        .catch((error) => {
+          if (port) {
+            port.postMessage({ ok: false, message: String(error) });
+          }
+        })
+    );
   }
 });
