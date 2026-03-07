@@ -62,9 +62,8 @@ button {
   position: sticky;
   top: 0;
   z-index: 20;
-  display: grid;
-  grid-template-columns: 44px 1fr auto;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
   padding: 10px 14px 12px;
   backdrop-filter: blur(8px);
@@ -77,11 +76,17 @@ button {
   font-size: 1.1rem;
   text-align: center;
   letter-spacing: 0.02em;
+  line-height: 1.35;
+  padding: 0 46px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .top-actions {
   display: flex;
   gap: 8px;
+  justify-content: flex-end;
 }
 
 .circle-button {
@@ -113,6 +118,9 @@ button {
 }
 
 .back-button {
+  position: absolute;
+  top: 10px;
+  left: 14px;
   background: #fff;
   box-shadow: 0 6px 18px rgba(150, 138, 153, 0.2);
   color: var(--text);
