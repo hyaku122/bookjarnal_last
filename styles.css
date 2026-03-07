@@ -63,8 +63,9 @@ button {
   top: 0;
   z-index: 20;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
   padding: 10px 14px 12px;
   backdrop-filter: blur(8px);
   background: rgba(255, 250, 244, 0.88);
@@ -74,19 +75,21 @@ button {
 .header-title {
   margin: 0;
   font-size: 1.1rem;
-  text-align: center;
+  text-align: left;
   letter-spacing: 0.02em;
-  line-height: 1.35;
-  padding: 0 46px;
+  line-height: 1.25;
+  padding: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
+  max-width: 56vw;
 }
 
 .top-actions {
   display: flex;
   gap: 8px;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .circle-button {
@@ -118,9 +121,6 @@ button {
 }
 
 .back-button {
-  position: absolute;
-  top: 10px;
-  left: 14px;
   background: #fff;
   box-shadow: 0 6px 18px rgba(150, 138, 153, 0.2);
   color: var(--text);
