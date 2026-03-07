@@ -385,8 +385,16 @@ function renderBookList() {
     startDate.textContent = formatDateForDisplay(book.startDate);
 
     const days = document.createElement("div");
+    const daysText = calculateDaysText(book.startDate, book.endDate);
+    const normalizedDaysText = daysText.replace(/[^0-9/]/g, "");
     days.className = "book-days";
-    days.textContent = calculateDaysText(book.startDate, book.endDate);
+    if (!/^\d+(?:\/\d+)?$/.test(normalizedDaysText)) {
+      days.classList.add("is-label");
+    }
+    const daysInner = document.createElement("span");
+    daysInner.className = "book-days-inner";
+    daysInner.textContent = daysText;
+    days.appendChild(daysInner);
 
     const meta = document.createElement("div");
     meta.className = "book-meta";
@@ -477,7 +485,12 @@ function formatDateForDisplay(dateText) {
   if (!year || !month || !day) {
     return dateText;
   }
-  return `${year}/${month}/${day}`;
+  const monthNumber = Number(month);
+  const dayNumber = Number(day);
+  if (!Number.isInteger(monthNumber) || !Number.isInteger(dayNumber)) {
+    return dateText;
+  }
+  return `${monthNumber}/${dayNumber}`;
 }
 
 function calculateDaysText(startDate, endDate) {
