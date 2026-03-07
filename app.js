@@ -10,7 +10,6 @@ const TARGET_PHOTO_BYTES = 1024 * 1024;
 const state = {
   books: [],
   editingBookId: null,
-  detailBookId: null,
   draftPhotos: [],
   currentView: "list",
   toastTimer: null,
@@ -30,7 +29,6 @@ const elements = {
   openSettingsButton: document.getElementById("openSettingsButton"),
   listView: document.getElementById("listView"),
   formView: document.getElementById("formView"),
-  detailView: document.getElementById("detailView"),
   settingsView: document.getElementById("settingsView"),
   bookListContainer: document.getElementById("bookListContainer"),
   emptyMessage: document.getElementById("emptyMessage"),
@@ -45,15 +43,6 @@ const elements = {
   photoInput: document.getElementById("photoInput"),
   photoPreviewList: document.getElementById("photoPreviewList"),
   deleteFromFormButton: document.getElementById("deleteFromFormButton"),
-  detailStartDate: document.getElementById("detailStartDate"),
-  detailEndDate: document.getElementById("detailEndDate"),
-  detailDays: document.getElementById("detailDays"),
-  detailTitle: document.getElementById("detailTitle"),
-  detailAuthor: document.getElementById("detailAuthor"),
-  detailReview: document.getElementById("detailReview"),
-  detailPhotoGrid: document.getElementById("detailPhotoGrid"),
-  detailEditButton: document.getElementById("detailEditButton"),
-  detailDeleteButton: document.getElementById("detailDeleteButton"),
   backupOutput: document.getElementById("backupOutput"),
   generateBackupButton: document.getElementById("generateBackupButton"),
   copyBackupButton: document.getElementById("copyBackupButton"),
@@ -63,9 +52,6 @@ const elements = {
   updatePanel: document.getElementById("updatePanel"),
   updateStatusText: document.getElementById("updateStatusText"),
   applyUpdateButton: document.getElementById("applyUpdateButton"),
-  photoModal: document.getElementById("photoModal"),
-  photoModalImage: document.getElementById("photoModalImage"),
-  closePhotoModalButton: document.getElementById("closePhotoModalButton"),
   toast: document.getElementById("toast")
 };
 
@@ -85,7 +71,6 @@ async function initializeApp() {
 
 function attachEvents() {
   elements.backButton.addEventListener("click", () => {
-    closePhotoModal();
     showView("list");
   });
 
@@ -111,7 +96,12 @@ function attachEvents() {
     if (!id) {
       return;
     }
-    openDetail(id);
+    const book = findBookById(id);
+    if (!book) {
+      showToast("対象の記録が見つかりません");
+      return;
+    }
+    openFormForEdit(book);
   });
 
   elements.bookForm.addEventListener("submit", async (event) => {
@@ -140,47 +130,6 @@ function attachEvents() {
     renderPhotoPreviewList();
   });
 
-  elements.detailEditButton.addEventListener("click", () => {
-    const book = findBookById(state.detailBookId);
-    if (!book) {
-      showToast("表示中の記録が見つかりません");
-      return;
-    }
-    openFormForEdit(book);
-  });
-
-  elements.detailDeleteButton.addEventListener("click", async () => {
-    await deleteFromDetail();
-  });
-
-  elements.detailPhotoGrid.addEventListener("click", (event) => {
-    const button = event.target.closest(".detail-photo-button");
-    if (!button) {
-      return;
-    }
-    const source = button.dataset.source;
-    if (!source) {
-      return;
-    }
-    openPhotoModal(source);
-  });
-
-  elements.closePhotoModalButton.addEventListener("click", () => {
-    closePhotoModal();
-  });
-
-  elements.photoModal.addEventListener("click", (event) => {
-    if (event.target === elements.photoModal) {
-      closePhotoModal();
-    }
-  });
-
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-      closePhotoModal();
-    }
-  });
-
   elements.generateBackupButton.addEventListener("click", () => {
     generateBackupText();
   });
@@ -204,7 +153,6 @@ function showView(viewName) {
   const visibilityMap = {
     list: elements.listView,
     form: elements.formView,
-    detail: elements.detailView,
     settings: elements.settingsView
   };
 
@@ -225,8 +173,6 @@ function showView(viewName) {
     elements.headerTitle.textContent = "読書感想ジャーナル";
   } else if (viewName === "form") {
     elements.headerTitle.textContent = state.editingBookId ? "記録を編集" : "新しい記録";
-  } else if (viewName === "detail") {
-    elements.headerTitle.textContent = "記録の詳細";
   } else if (viewName === "settings") {
     elements.headerTitle.textContent = "設定";
   }
@@ -304,7 +250,7 @@ async function saveForm() {
   await dbPut(book);
   await refreshBooks();
   showToast("保存しました");
-  openDetail(book.id);
+  showView("list");
 }
 
 async function deleteFromForm() {
@@ -326,75 +272,6 @@ async function deleteFromForm() {
   await refreshBooks();
   showToast("削除しました");
   showView("list");
-}
-
-async function deleteFromDetail() {
-  const target = findBookById(state.detailBookId);
-  if (!target) {
-    showToast("削除対象が見つかりません");
-    return;
-  }
-  const ok = window.confirm(`「${target.title}」を削除しますか？この操作は取り消せません。`);
-  if (!ok) {
-    return;
-  }
-
-  await dbDelete(target.id);
-  await refreshBooks();
-  showToast("削除しました");
-  showView("list");
-}
-
-function openDetail(bookId) {
-  const book = findBookById(bookId);
-  if (!book) {
-    showToast("対象の記録が見つかりません");
-    showView("list");
-    return;
-  }
-
-  state.detailBookId = book.id;
-
-  elements.detailStartDate.textContent = formatDateForDisplay(book.startDate);
-  elements.detailEndDate.textContent = book.endDate ? formatDateForDisplay(book.endDate) : "未入力";
-  elements.detailDays.textContent = calculateDaysText(book.startDate, book.endDate);
-  elements.detailTitle.textContent = book.title || "未入力";
-  elements.detailAuthor.textContent = book.author || "未入力";
-  elements.detailReview.textContent = book.review || "未入力";
-
-  renderDetailPhotoGrid(book.photos);
-  showView("detail");
-}
-
-function renderDetailPhotoGrid(photos) {
-  elements.detailPhotoGrid.innerHTML = "";
-
-  if (!Array.isArray(photos) || photos.length === 0) {
-    const paragraph = document.createElement("p");
-    paragraph.className = "photo-empty-detail";
-    paragraph.textContent = "写真はありません。";
-    elements.detailPhotoGrid.appendChild(paragraph);
-    return;
-  }
-
-  const fragment = document.createDocumentFragment();
-  photos.forEach((photo) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "detail-photo-button";
-    button.dataset.source = photo.dataUrl;
-    button.setAttribute("aria-label", "写真を拡大");
-
-    const image = document.createElement("img");
-    image.src = photo.dataUrl;
-    image.alt = "登録写真";
-    image.loading = "lazy";
-
-    button.appendChild(image);
-    fragment.appendChild(button);
-  });
-
-  elements.detailPhotoGrid.appendChild(fragment);
 }
 
 async function addSelectedPhotos() {
@@ -501,7 +378,7 @@ function renderBookList() {
     row.type = "button";
     row.className = "book-row";
     row.dataset.id = book.id;
-    row.setAttribute("aria-label", `${book.title}の詳細を開く`);
+    row.setAttribute("aria-label", `${book.title}を編集`);
 
     const startDate = document.createElement("div");
     startDate.className = "book-start-date";
@@ -545,18 +422,6 @@ function showToast(message) {
   state.toastTimer = window.setTimeout(() => {
     elements.toast.classList.add("hidden");
   }, 2300);
-}
-
-function openPhotoModal(source) {
-  elements.photoModalImage.src = source;
-  elements.photoModal.classList.remove("hidden");
-  document.body.style.overflow = "hidden";
-}
-
-function closePhotoModal() {
-  elements.photoModal.classList.add("hidden");
-  elements.photoModalImage.src = "";
-  document.body.style.overflow = "";
 }
 
 function clearFormError() {

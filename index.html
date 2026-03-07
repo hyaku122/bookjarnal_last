@@ -69,46 +69,6 @@
           </form>
         </section>
 
-        <section id="detailView" class="view-screen hidden" aria-label="詳細">
-          <article class="panel">
-            <h2 class="panel-title">記録の詳細</h2>
-            <dl class="detail-list">
-              <div class="detail-row">
-                <dt>読み始めた日</dt>
-                <dd id="detailStartDate"></dd>
-              </div>
-              <div class="detail-row">
-                <dt>読み終わった日</dt>
-                <dd id="detailEndDate"></dd>
-              </div>
-              <div class="detail-row">
-                <dt>日数</dt>
-                <dd id="detailDays"></dd>
-              </div>
-              <div class="detail-row">
-                <dt>題名</dt>
-                <dd id="detailTitle"></dd>
-              </div>
-              <div class="detail-row">
-                <dt>著者名</dt>
-                <dd id="detailAuthor"></dd>
-              </div>
-              <div class="detail-row review-row">
-                <dt>感想</dt>
-                <dd id="detailReview"></dd>
-              </div>
-            </dl>
-
-            <h3 class="photo-title">写真</h3>
-            <div id="detailPhotoGrid" class="detail-photo-grid"></div>
-
-            <div class="button-row">
-              <button id="detailEditButton" class="pill-button secondary" type="button">編集</button>
-              <button id="detailDeleteButton" class="pill-button danger" type="button">削除</button>
-            </div>
-          </article>
-        </section>
-
         <section id="settingsView" class="view-screen hidden" aria-label="設定">
           <section class="panel">
             <h2 class="panel-title">バックアップ</h2>
@@ -134,11 +94,6 @@
           </section>
         </section>
       </main>
-    </div>
-
-    <div id="photoModal" class="photo-modal hidden" role="dialog" aria-modal="true" aria-label="写真拡大表示">
-      <button id="closePhotoModalButton" class="close-modal-button" type="button" aria-label="閉じる">×</button>
-      <img id="photoModalImage" class="photo-modal-image" alt="拡大写真">
     </div>
 
     <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
