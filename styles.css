@@ -179,8 +179,8 @@ button {
   padding: 10px;
   text-align: left;
   display: grid;
-  grid-template-columns: 86px max-content minmax(0, 1fr);
-  gap: 6px;
+  grid-template-columns: 86px 4.2em minmax(0, 1fr);
+  column-gap: 1ch;
   align-items: center;
   cursor: pointer;
   box-shadow: 0 6px 18px rgba(219, 196, 209, 0.14);
@@ -216,8 +216,11 @@ button {
   line-height: 1;
   letter-spacing: 0.01em;
   white-space: nowrap;
-  justify-self: start;
-  text-align: left;
+  width: 100%;
+  justify-self: stretch;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .book-meta {
@@ -412,6 +415,6 @@ button {
   }
 
   .book-row {
-    grid-template-columns: 94px max-content 1fr;
+    grid-template-columns: 94px 4.2em 1fr;
   }
 }
