@@ -171,7 +171,7 @@ function showView(viewName) {
   elements.headerTitle.classList.remove("home-title");
 
   if (viewName === "list") {
-    elements.headerTitle.textContent = "\u{1F516} \u4F59\u767D\u306E\u6809";
+    elements.headerTitle.textContent = "余白の栞";
     elements.headerTitle.classList.add("home-title");
   } else if (viewName === "form") {
     elements.headerTitle.textContent = state.editingBookId ? "記録を編集" : "新しい記録";
@@ -384,11 +384,15 @@ function renderBookList() {
 
     const startDate = document.createElement("div");
     startDate.className = "book-start-date";
-    startDate.textContent = formatDateForDisplay(book.startDate);
+    const startDateMain = document.createElement("div");
+    startDateMain.className = "book-start-date-main";
+    startDateMain.textContent = formatDateForDisplay(book.startDate);
 
-    const days = document.createElement("div");
-    days.className = "book-days";
-    days.textContent = calculateDaysText(book.startDate, book.endDate);
+    const startDateSub = document.createElement("div");
+    startDateSub.className = "book-start-date-sub";
+    startDateSub.textContent = calculateDaysText(book.startDate, book.endDate);
+    startDate.appendChild(startDateMain);
+    startDate.appendChild(startDateSub);
 
     const meta = document.createElement("div");
     meta.className = "book-meta";
@@ -405,7 +409,6 @@ function renderBookList() {
     meta.appendChild(author);
 
     row.appendChild(startDate);
-    row.appendChild(days);
     row.appendChild(meta);
 
     fragment.appendChild(row);
