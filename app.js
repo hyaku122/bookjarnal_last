@@ -134,15 +134,21 @@ function attachEvents() {
     renderPhotoPreviewList();
   });
 
-  elements.generateBackupButton.addEventListener("click", () => {
+  elements.generateBackupButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
     generateBackupText();
   });
 
-  elements.copyBackupButton.addEventListener("click", async () => {
+  elements.copyBackupButton.addEventListener("click", async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
     await copyBackupText();
   });
 
-  elements.restoreButton.addEventListener("click", async () => {
+  elements.restoreButton.addEventListener("click", async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
     await restoreFromText();
   });
 
