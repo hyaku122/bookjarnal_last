@@ -15,7 +15,8 @@ const state = {
   toastTimer: null,
   swRegistration: null,
   swUpdateReady: false,
-  swControllerChanged: false
+  swControllerChanged: false,
+  lastGeneratedBackupLength: 0
 };
 
 let dbPromise = null;
@@ -44,9 +45,11 @@ const elements = {
   photoPreviewList: document.getElementById("photoPreviewList"),
   deleteFromFormButton: document.getElementById("deleteFromFormButton"),
   backupOutput: document.getElementById("backupOutput"),
+  backupLengthInfo: document.getElementById("backupLengthInfo"),
   generateBackupButton: document.getElementById("generateBackupButton"),
   copyBackupButton: document.getElementById("copyBackupButton"),
   restoreInput: document.getElementById("restoreInput"),
+  restoreLengthInfo: document.getElementById("restoreLengthInfo"),
   restoreButton: document.getElementById("restoreButton"),
   settingsError: document.getElementById("settingsError"),
   updatePanel: document.getElementById("updatePanel"),
@@ -66,6 +69,7 @@ document.addEventListener("DOMContentLoaded", () => {
 async function initializeApp() {
   showView("list");
   await refreshBooks();
+  updateBackupLengthIndicators();
   await registerServiceWorker();
 }
 
@@ -140,6 +144,16 @@ function attachEvents() {
 
   elements.restoreButton.addEventListener("click", async () => {
     await restoreFromText();
+  });
+
+  elements.restoreInput.addEventListener("input", () => {
+    updateBackupLengthIndicators();
+  });
+
+  elements.restoreInput.addEventListener("paste", () => {
+    window.setTimeout(() => {
+      updateBackupLengthIndicators();
+    }, 0);
   });
 
   elements.applyUpdateButton.addEventListener("click", async () => {
@@ -657,6 +671,8 @@ function generateBackupText() {
   const json = JSON.stringify(payload);
   const backup = `${BACKUP_PREFIX}${encodeUtf8ToBase64(json)}`;
   elements.backupOutput.value = backup;
+  state.lastGeneratedBackupLength = backup.length;
+  updateBackupLengthIndicators();
   showToast("バックアップ文字列を作成しました");
 }
 
@@ -683,33 +699,81 @@ async function copyBackupText() {
   }
 }
 
-function parseBackupText(raw) {
-  const text = raw.trim();
-  if (!text.startsWith(BACKUP_PREFIX)) {
-    throw new Error("先頭が BOOKJOURNAL1: ではありません。");
+function createBackupParseError(code, message) {
+  const error = new Error(message);
+  error.code = code;
+  return error;
+}
+
+function normalizeBackupText(raw) {
+  if (typeof raw !== "string") {
+    return "";
+  }
+  return raw
+    .replace(/\uFEFF/g, "")
+    .trim()
+    .replace(/\s+/g, "");
+}
+
+function formatLength(value) {
+  return Number(value || 0).toLocaleString("ja-JP");
+}
+
+function updateBackupLengthIndicators() {
+  const generated = String(elements.backupOutput.value || "");
+  const restoreRaw = String(elements.restoreInput.value || "");
+  const restoreNormalized = normalizeBackupText(restoreRaw);
+  const generatedLength = generated.length;
+  const normalizedLength = restoreNormalized.length;
+
+  if (elements.backupLengthInfo) {
+    elements.backupLengthInfo.textContent = `生成文字数: ${formatLength(generatedLength)} 文字`;
+  }
+  if (!elements.restoreLengthInfo) {
+    return;
   }
 
-  const encoded = text.slice(BACKUP_PREFIX.length).trim();
+  let comparisonText = "";
+  elements.restoreLengthInfo.classList.remove("is-match", "is-mismatch");
+  if (generatedLength > 0 && normalizedLength > 0) {
+    const isMatch = generatedLength === normalizedLength;
+    comparisonText = ` / 生成時との比較: ${isMatch ? "一致" : "不一致"}`;
+    elements.restoreLengthInfo.classList.add(isMatch ? "is-match" : "is-mismatch");
+  }
+
+  elements.restoreLengthInfo.textContent = `貼り付け文字数: ${formatLength(restoreRaw.length)} 文字 / 正規化後: ${formatLength(normalizedLength)} 文字${comparisonText}`;
+}
+
+function parseBackupText(raw) {
+  const text = normalizeBackupText(raw);
+  if (!text) {
+    throw createBackupParseError("BROKEN_STRING", "文字列が壊れている可能性があります（入力が空です）。");
+  }
+  if (!text.startsWith(BACKUP_PREFIX)) {
+    throw createBackupParseError("BROKEN_STRING", "文字列が壊れている可能性があります（先頭識別子がありません）。");
+  }
+
+  const encoded = text.slice(BACKUP_PREFIX.length);
   if (!encoded) {
-    throw new Error("バックアップ文字列が空です。");
+    throw createBackupParseError("BROKEN_STRING", "文字列が壊れている可能性があります（データ本体が空です）。");
   }
 
   let decoded = "";
   try {
     decoded = decodeBase64ToUtf8(encoded);
   } catch (_error) {
-    throw new Error("Base64の復号に失敗しました。文字列が壊れている可能性があります。");
+    throw createBackupParseError("DECODE_FAILED", "デコード失敗: Base64復号に失敗しました。");
   }
 
   let parsed = null;
   try {
     parsed = JSON.parse(decoded);
   } catch (_error) {
-    throw new Error("JSONの解析に失敗しました。");
+    throw createBackupParseError("JSON_RESTORE_FAILED", "JSON復元失敗: JSON解析に失敗しました。");
   }
 
   if (!parsed || parsed.version !== 1 || !Array.isArray(parsed.books)) {
-    throw new Error("対応していないバックアップ形式です。");
+    throw createBackupParseError("BROKEN_STRING", "文字列が壊れている可能性があります（対応していない形式です）。");
   }
 
   return parsed.books.map((book, index) => sanitizeBook(book, index));
@@ -754,8 +818,10 @@ function sanitizeBook(raw, index) {
 
 async function restoreFromText() {
   clearSettingsError();
-  const source = elements.restoreInput.value;
-  if (!source.trim()) {
+  const sourceRaw = elements.restoreInput.value;
+  const source = normalizeBackupText(sourceRaw);
+  updateBackupLengthIndicators();
+  if (!source) {
     showSettingsError("復元用文字列を入力してください。");
     return;
   }
@@ -764,12 +830,17 @@ async function restoreFromText() {
   try {
     books = parseBackupText(source);
   } catch (error) {
-    showSettingsError(error.message);
+    const message = error && error.message ? error.message : "復元に失敗しました。";
+    showSettingsError(message);
     return;
   }
 
+  const generatedLength = elements.backupOutput.value.length || state.lastGeneratedBackupLength;
+  const comparisonText = generatedLength > 0
+    ? `\n生成文字数: ${formatLength(generatedLength)} / 復元前文字数: ${formatLength(source.length)}`
+    : `\n復元前文字数: ${formatLength(source.length)}`;
   const ok = window.confirm(
-    `現在の記録 ${state.books.length} 件を削除し、バックアップ ${books.length} 件で全置換えします。よろしいですか？`
+    `現在の記録 ${state.books.length} 件を削除し、バックアップ ${books.length} 件で全置換えします。よろしいですか？${comparisonText}`
   );
   if (!ok) {
     return;

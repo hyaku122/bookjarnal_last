@@ -75,14 +75,34 @@
             <p class="settings-note">文字列形式で書き出し・復元できます。</p>
 
             <label class="field-label" for="backupOutput">バックアップ文字列</label>
-            <textarea id="backupOutput" class="field-textarea mono-text" rows="6" readonly></textarea>
+            <textarea
+              id="backupOutput"
+              class="field-textarea mono-text backup-string-textarea"
+              rows="6"
+              readonly
+              wrap="off"
+              spellcheck="false"
+            ></textarea>
+            <p id="backupLengthInfo" class="length-info">生成文字数: 0 文字</p>
             <div class="button-row">
               <button id="generateBackupButton" class="pill-button primary" type="button">文字列作成</button>
               <button id="copyBackupButton" class="pill-button secondary" type="button">文字列コピー</button>
             </div>
 
             <label class="field-label" for="restoreInput">復元用文字列</label>
-            <textarea id="restoreInput" class="field-textarea mono-text" rows="6" placeholder="BOOKJOURNAL1:..."></textarea>
+            <textarea
+              id="restoreInput"
+              class="field-textarea mono-text backup-string-textarea"
+              rows="8"
+              placeholder="BOOKJOURNAL1:..."
+              wrap="off"
+              spellcheck="false"
+              autocapitalize="off"
+              autocorrect="off"
+              autocomplete="off"
+              inputmode="text"
+            ></textarea>
+            <p id="restoreLengthInfo" class="length-info">貼り付け文字数: 0 文字 / 正規化後: 0 文字</p>
             <button id="restoreButton" class="pill-button danger full-width" type="button">貼り付け文字列から復元（全置換え）</button>
             <p id="settingsError" class="form-error hidden" role="alert"></p>
           </section>
