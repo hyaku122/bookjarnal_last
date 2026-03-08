@@ -179,7 +179,7 @@ button {
   padding: 10px;
   text-align: left;
   display: grid;
-  grid-template-columns: 86px 4.2em minmax(0, 1fr);
+  grid-template-columns: 69px 4.2em minmax(0, 1fr);
   column-gap: 1ch;
   align-items: center;
   cursor: pointer;
@@ -200,7 +200,7 @@ button {
   border: 1px solid #eadfeb;
   background: linear-gradient(180deg, #ffffff, #f8f6fa 84%);
   color: #786c86;
-  font-size: 1.05rem;
+  font-size: 0.97rem;
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.01em;
@@ -211,7 +211,7 @@ button {
 
 .book-days {
   color: #d07d13;
-  font-size: 1.05rem;
+  font-size: 0.97rem;
   font-weight: 800;
   line-height: 1;
   letter-spacing: 0.01em;
@@ -415,6 +415,6 @@ button {
   }
 
   .book-row {
-    grid-template-columns: 94px 4.2em 1fr;
+    grid-template-columns: 75px 4.2em 1fr;
   }
 }
