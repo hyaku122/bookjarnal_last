@@ -721,6 +721,41 @@ function normalizeBackupText(raw) {
     .replace(/\s+/g, "");
 }
 
+function canonicalizeBackupPrefix(text) {
+  return String(text || "").replace(/BOOKJOURNAL1：/gi, "BOOKJOURNAL1:");
+}
+
+function extractEncodedBackupSegment(text) {
+  const normalized = canonicalizeBackupPrefix(text);
+  const upper = normalized.toUpperCase();
+  const prefixIndex = upper.indexOf(BACKUP_PREFIX);
+  if (prefixIndex >= 0) {
+    return {
+      hasPrefix: true,
+      encoded: normalized.slice(prefixIndex + BACKUP_PREFIX.length)
+    };
+  }
+  return {
+    hasPrefix: false,
+    encoded: normalized
+  };
+}
+
+function normalizeBase64Payload(text) {
+  let payload = String(text || "")
+    .replace(/^["'“”‘’]+/, "")
+    .replace(/["'“”‘’]+$/, "")
+    .replace(/-/g, "+")
+    .replace(/_/g, "/")
+    .replace(/[^A-Za-z0-9+/=]/g, "");
+
+  const remainder = payload.length % 4;
+  if (remainder > 0) {
+    payload += "=".repeat(4 - remainder);
+  }
+  return payload;
+}
+
 function formatLength(value) {
   return Number(value || 0).toLocaleString("ja-JP");
 }
@@ -729,6 +764,7 @@ function updateBackupLengthIndicators() {
   const generated = String(elements.backupOutput.value || "");
   const restoreRaw = String(elements.restoreInput.value || "");
   const restoreNormalized = normalizeBackupText(restoreRaw);
+  const { hasPrefix } = extractEncodedBackupSegment(restoreNormalized);
   const generatedLength = generated.length;
   const normalizedLength = restoreNormalized.length;
 
@@ -747,7 +783,8 @@ function updateBackupLengthIndicators() {
     elements.restoreLengthInfo.classList.add(isMatch ? "is-match" : "is-mismatch");
   }
 
-  elements.restoreLengthInfo.textContent = `貼り付け文字数: ${formatLength(restoreRaw.length)} 文字 / 正規化後: ${formatLength(normalizedLength)} 文字${comparisonText}`;
+  const prefixText = hasPrefix ? "あり" : "なし";
+  elements.restoreLengthInfo.textContent = `貼り付け文字数: ${formatLength(restoreRaw.length)} 文字 / 正規化後: ${formatLength(normalizedLength)} 文字 / 識別子: ${prefixText}${comparisonText}`;
 }
 
 function parseBackupText(raw) {
@@ -755,19 +792,24 @@ function parseBackupText(raw) {
   if (!text) {
     throw createBackupParseError("BROKEN_STRING", "文字列が壊れている可能性があります（入力が空です）。");
   }
-  if (!text.startsWith(BACKUP_PREFIX)) {
-    throw createBackupParseError("BROKEN_STRING", "文字列が壊れている可能性があります（先頭識別子がありません）。");
-  }
 
-  const encoded = text.slice(BACKUP_PREFIX.length);
+  const { hasPrefix, encoded } = extractEncodedBackupSegment(text);
   if (!encoded) {
     throw createBackupParseError("BROKEN_STRING", "文字列が壊れている可能性があります（データ本体が空です）。");
   }
 
+  const normalizedPayload = normalizeBase64Payload(encoded);
+  if (!normalizedPayload) {
+    throw createBackupParseError("BROKEN_STRING", "文字列が壊れている可能性があります（有効なデータがありません）。");
+  }
+
   let decoded = "";
   try {
-    decoded = decodeBase64ToUtf8(encoded);
+    decoded = decodeBase64ToUtf8(normalizedPayload);
   } catch (_error) {
+    if (!hasPrefix) {
+      throw createBackupParseError("DECODE_FAILED", "デコード失敗: 識別子なしの文字列を復号できませんでした。BOOKJOURNAL1: から始まる文字列を貼り付けてください。");
+    }
     throw createBackupParseError("DECODE_FAILED", "デコード失敗: Base64復号に失敗しました。");
   }
 
