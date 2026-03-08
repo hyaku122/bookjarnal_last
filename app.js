@@ -385,16 +385,8 @@ function renderBookList() {
     startDate.textContent = formatDateForDisplay(book.startDate);
 
     const days = document.createElement("div");
-    const daysText = calculateDaysText(book.startDate, book.endDate);
-    const normalizedDaysText = daysText.replace(/[^0-9/]/g, "");
     days.className = "book-days";
-    if (!/^\d+(?:\/\d+)?$/.test(normalizedDaysText)) {
-      days.classList.add("is-label");
-    }
-    const daysInner = document.createElement("span");
-    daysInner.className = "book-days-inner";
-    daysInner.textContent = daysText;
-    days.appendChild(daysInner);
+    days.textContent = calculateDaysText(book.startDate, book.endDate);
 
     const meta = document.createElement("div");
     meta.className = "book-meta";
