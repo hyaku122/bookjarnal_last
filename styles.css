@@ -292,10 +292,10 @@ button {
   text-orientation: mixed;
   direction: ltr;
   unicode-bidi: plaintext;
-  white-space: pre;
-  word-break: normal;
-  overflow-wrap: normal;
-  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  overflow-x: hidden;
   overflow-y: auto;
 }
 

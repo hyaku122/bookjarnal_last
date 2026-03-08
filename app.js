@@ -972,7 +972,7 @@ async function registerServiceWorker() {
         return;
       }
       state.swControllerChanged = true;
-      window.location.reload();
+      showToast("更新を適用しました。必要なら画面を再読み込みしてください");
     });
 
     await refreshUpdatePanel();
