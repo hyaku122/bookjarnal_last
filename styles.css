@@ -202,7 +202,7 @@ button {
   justify-content: center;
   width: 100%;
   min-height: 48px;
-  padding: 8px 6px;
+  padding: 4px 6px;
   border-radius: 18px;
   border: 1px solid #eadfeb;
   background: linear-gradient(180deg, #f4fbe8, #e8f3d4 84%);
@@ -213,9 +213,9 @@ button {
 }
 
 .book-start-date-main {
-  color: #5f7a49;
+  color: #1f8f36;
   font-size: 0.89rem;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1;
   letter-spacing: 0.01em;
 }
@@ -226,7 +226,7 @@ button {
   font-weight: 800;
   line-height: 1;
   letter-spacing: 0.01em;
-  margin-top: 3px;
+  margin-top: 3mm;
   white-space: nowrap;
   text-align: center;
 }
