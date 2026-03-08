@@ -168,9 +168,11 @@ function showView(viewName) {
   const isList = viewName === "list";
   elements.topActions.classList.toggle("hidden", !isList);
   elements.backButton.classList.toggle("hidden", isList);
+  elements.headerTitle.classList.remove("home-title");
 
   if (viewName === "list") {
-    elements.headerTitle.textContent = "余白の栞";
+    elements.headerTitle.textContent = "\u{1F516} \u4F59\u767D\u306E\u6809";
+    elements.headerTitle.classList.add("home-title");
   } else if (viewName === "form") {
     elements.headerTitle.textContent = state.editingBookId ? "記録を編集" : "新しい記録";
   } else if (viewName === "settings") {
