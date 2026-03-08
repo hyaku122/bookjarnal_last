@@ -180,7 +180,7 @@ button {
   text-align: left;
   display: grid;
   grid-template-columns: 69px 4.2em minmax(0, 1fr);
-  column-gap: 1ch;
+  column-gap: 0.5ch;
   align-items: center;
   cursor: pointer;
   box-shadow: 0 6px 18px rgba(219, 196, 209, 0.14);
@@ -198,8 +198,8 @@ button {
   padding: 10px 8px;
   border-radius: 18px;
   border: 1px solid #eadfeb;
-  background: linear-gradient(180deg, #ffffff, #f8f6fa 84%);
-  color: #786c86;
+  background: linear-gradient(180deg, #f4fbe8, #e8f3d4 84%);
+  color: #5f7a49;
   font-size: 0.97rem;
   font-weight: 700;
   line-height: 1;
