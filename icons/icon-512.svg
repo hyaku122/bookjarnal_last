@@ -17,4 +17,16 @@
   <path d="M134 50h-33c-9 0-16 7-16 16v78h33c9 0 16-7 16-16V50z" fill="url(#book)" stroke="#88b8de" stroke-width="4" />
   <path d="M96 62v72" stroke="#d8a4be" stroke-width="4" stroke-linecap="round" />
   <path d="M64 74h20M64 90h20M64 106h20M108 74h20M108 90h20M108 106h20" stroke="#b7c6d8" stroke-width="3.5" stroke-linecap="round" />
+  <rect x="64" y="116" width="64" height="40" rx="20" fill="#fff5d2" stroke="#d8c28b" stroke-width="2.5" />
+  <text
+    x="96"
+    y="143"
+    text-anchor="middle"
+    fill="#d07d13"
+    font-size="28"
+    font-weight="700"
+    font-family="'Hiragino Maru Gothic ProN', 'Yu Gothic', 'Meiryo', sans-serif"
+  >
+    栞
+  </text>
 </svg>

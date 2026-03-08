@@ -1,7 +1,7 @@
 {
-  "name": "読書感想ジャーナル",
-  "short_name": "読書ジャーナル",
-  "description": "個人用の読書感想ジャーナル",
+  "name": "余白の栞",
+  "short_name": "余白の栞",
+  "description": "個人用の読書記録アプリ「余白の栞」",
   "lang": "ja",
   "start_url": "./",
   "scope": "./",

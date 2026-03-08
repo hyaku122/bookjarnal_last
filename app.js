@@ -170,7 +170,7 @@ function showView(viewName) {
   elements.backButton.classList.toggle("hidden", isList);
 
   if (viewName === "list") {
-    elements.headerTitle.textContent = "読書感想ジャーナル";
+    elements.headerTitle.textContent = "余白の栞";
   } else if (viewName === "form") {
     elements.headerTitle.textContent = state.editingBookId ? "記録を編集" : "新しい記録";
   } else if (viewName === "settings") {
