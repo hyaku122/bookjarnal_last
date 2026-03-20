@@ -1,4 +1,4 @@
-const CACHE_VERSION = "bookjournal-v5";
+const CACHE_VERSION = "bookjournal-v6";
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 
 const APP_SHELL = [
@@ -7,9 +7,9 @@ const APP_SHELL = [
   "./styles.css",
   "./app.js",
   "./manifest.webmanifest",
-  "./icons/apple-touch-icon-180.png?v=4",
-  "./icons/icon-192.png?v=4",
-  "./icons/icon-512.png?v=4"
+  "./icons/apple-touch-icon-180.png?v=5",
+  "./icons/icon-192.png?v=5",
+  "./icons/icon-512.png?v=5"
 ];
 
 async function refreshAppShellCache() {
