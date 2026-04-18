@@ -6,75 +6,164 @@
     <meta name="theme-color" content="#ffc2d4">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="余白の栞">
+    <meta name="apple-mobile-web-app-title" content="&#x4F59;&#x767D;&#x306E;&#x6809;">
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-180.png?v=5">
     <link rel="stylesheet" href="styles.css">
-    <title>余白の栞</title>
+    <title>&#x4F59;&#x767D;&#x306E;&#x6809;</title>
   </head>
   <body>
     <div class="app-shell">
       <header class="top-bar">
-        <button id="backButton" class="circle-button back-button hidden" type="button" aria-label="戻る">←</button>
+        <button
+          id="backButton"
+          class="circle-button back-button hidden"
+          type="button"
+          aria-label="&#x623B;&#x308B;"
+        >
+          <span aria-hidden="true">&#x2039;</span>
+        </button>
         <h1 id="headerTitle" class="header-title">&#x4F59;&#x767D;&#x306E;&#x6809;</h1>
-        <nav id="topActions" class="top-actions" aria-label="操作メニュー">
-          <button id="addBookButton" class="circle-button icon-edit" type="button" aria-label="新規入力">
-            <span aria-hidden="true">✏️</span>
+        <nav
+          id="topActions"
+          class="top-actions"
+          aria-label="&#x4E3B;&#x8981;&#x30E1;&#x30CB;&#x30E5;&#x30FC;"
+        >
+          <button
+            id="addBookButton"
+            class="circle-button icon-edit"
+            type="button"
+            aria-label="&#x65B0;&#x898F;&#x8A18;&#x9332;"
+          >
+            <span aria-hidden="true">&#x270E;</span>
           </button>
-          <button id="checkUpdateButton" class="circle-button icon-refresh" type="button" aria-label="更新確認">
-            <span aria-hidden="true">🔄</span>
+          <button
+            id="checkUpdateButton"
+            class="circle-button icon-refresh"
+            type="button"
+            aria-label="&#x66F4;&#x65B0;&#x78BA;&#x8A8D;"
+          >
+            <span aria-hidden="true">&#x21BB;</span>
           </button>
-          <button id="openSettingsButton" class="circle-button icon-settings" type="button" aria-label="設定">
-            <span aria-hidden="true">⚙️</span>
+          <button
+            id="openSettingsButton"
+            class="circle-button icon-settings"
+            type="button"
+            aria-label="&#x8A2D;&#x5B9A;"
+          >
+            <span aria-hidden="true">&#x2699;</span>
           </button>
         </nav>
       </header>
 
       <main class="main-content">
-        <section id="listView" class="view-screen" aria-label="本一覧">
+        <section
+          id="listView"
+          class="view-screen"
+          aria-label="&#x672C;&#x4E00;&#x89A7;"
+        >
           <p id="emptyMessage" class="empty-message hidden">
-            まだ記録がありません。右上の鉛筆アイコンから追加できます。
+            &#x307E;&#x3060;&#x8A18;&#x9332;&#x304C;&#x3042;&#x308A;&#x307E;&#x305B;&#x3093;&#x3002;&#x53F3;&#x4E0A;&#x306E;&#x30A2;&#x30A4;&#x30B3;&#x30F3;&#x304B;&#x3089;&#x8AAD;&#x66F8;&#x306E;&#x8A18;&#x9332;&#x3092;&#x8FFD;&#x52A0;&#x3067;&#x304D;&#x307E;&#x3059;&#x3002;
           </p>
           <div id="bookListContainer" class="book-list"></div>
         </section>
 
-        <section id="formView" class="view-screen hidden" aria-label="入力と編集">
+        <section
+          id="detailView"
+          class="view-screen hidden"
+          aria-label="&#x611F;&#x60F3;&#x30AB;&#x30FC;&#x30C9;"
+        >
+          <article id="detailCard" class="panel detail-card"></article>
+        </section>
+
+        <section
+          id="formView"
+          class="view-screen hidden"
+          aria-label="&#x5165;&#x529B;&#x3068;&#x7DE8;&#x96C6;"
+        >
           <form id="bookForm" class="panel" novalidate>
-            <h2 id="formTitle" class="panel-title">新しい記録</h2>
+            <h2 id="formTitle" class="panel-title">&#x65B0;&#x3057;&#x3044;&#x8A18;&#x9332;</h2>
             <p id="formError" class="form-error hidden" role="alert"></p>
 
-            <label class="field-label" for="startDateInput">読み始めた日（必須）</label>
+            <label class="field-label" for="startDateInput">
+              &#x8AAD;&#x307F;&#x59CB;&#x3081;&#x305F;&#x65E5;
+            </label>
             <input id="startDateInput" class="field-input" type="date" required>
 
-            <label class="field-label" for="endDateInput">読み終わった日（任意）</label>
+            <label class="field-label" for="endDateInput">
+              &#x8AAD;&#x307F;&#x7D42;&#x308F;&#x3063;&#x305F;&#x65E5;
+            </label>
             <input id="endDateInput" class="field-input" type="date">
 
-            <label class="field-label" for="titleInput">題名（必須）</label>
-            <input id="titleInput" class="field-input" type="text" maxlength="120" required placeholder="例: 吾輩は猫である">
+            <label class="field-label" for="titleInput">
+              &#x66F8;&#x540D;
+            </label>
+            <input
+              id="titleInput"
+              class="field-input"
+              type="text"
+              maxlength="120"
+              required
+              placeholder="&#x4F8B;&#xFF1A;&#x541B;&#x306E;&#x540D;&#x306F;&#x3002;"
+            >
 
-            <label class="field-label" for="authorInput">著者名</label>
-            <input id="authorInput" class="field-input" type="text" maxlength="120" placeholder="例: 夏目漱石">
+            <label class="field-label" for="authorInput">
+              &#x8457;&#x8005;
+            </label>
+            <input
+              id="authorInput"
+              class="field-input"
+              type="text"
+              maxlength="120"
+              placeholder="&#x4F8B;&#xFF1A;&#x65B0;&#x6D77;&#x8AA0;"
+            >
 
-            <label class="field-label" for="reviewInput">感想</label>
-            <textarea id="reviewInput" class="field-textarea" rows="6" maxlength="8000" placeholder="読んで感じたことを自由にメモ"></textarea>
+            <label class="field-label" for="reviewInput">
+              &#x611F;&#x60F3;
+            </label>
+            <textarea
+              id="reviewInput"
+              class="field-textarea"
+              rows="6"
+              maxlength="8000"
+              placeholder="&#x8AAD;&#x3093;&#x3067;&#x611F;&#x3058;&#x305F;&#x3053;&#x3068;&#x3092;&#x81EA;&#x7531;&#x306B;&#x30E1;&#x30E2;"
+            ></textarea>
 
-            <label class="field-label" for="photoInput">写真（最大10枚、保存前に1MB目安へ圧縮）</label>
+            <label class="field-label" for="photoInput">
+              &#x753B;&#x50CF;&#xFF08;&#x6700;&#x592710;&#x679A;&#x3001;&#x5727;&#x7E2E;&#x5F8C;1MB&#x4EE5;&#x5185;&#x3092;&#x76EE;&#x5B89;&#x306B;&#x4FDD;&#x5B58;&#xFF09;
+            </label>
             <input id="photoInput" class="field-input" type="file" accept="image/*" multiple>
             <ul id="photoPreviewList" class="photo-preview-list"></ul>
 
             <div class="button-row">
-              <button id="saveButton" class="pill-button primary" type="submit">保存</button>
-              <button id="deleteFromFormButton" class="pill-button danger hidden" type="button">削除</button>
+              <button id="saveButton" class="pill-button primary" type="submit">
+                &#x4FDD;&#x5B58;
+              </button>
+              <button
+                id="deleteFromFormButton"
+                class="pill-button danger hidden"
+                type="button"
+              >
+                &#x524A;&#x9664;
+              </button>
             </div>
           </form>
         </section>
 
-        <section id="settingsView" class="view-screen hidden" aria-label="設定">
+        <section
+          id="settingsView"
+          class="view-screen hidden"
+          aria-label="&#x8A2D;&#x5B9A;"
+        >
           <section class="panel">
-            <h2 class="panel-title">バックアップ</h2>
-            <p class="settings-note">文字列形式で書き出し・復元できます。</p>
+            <h2 class="panel-title">&#x30D0;&#x30C3;&#x30AF;&#x30A2;&#x30C3;&#x30D7;</h2>
+            <p class="settings-note">
+              &#x6587;&#x5B57;&#x5217;&#x3068;&#x3057;&#x3066;&#x66F8;&#x304D;&#x51FA;&#x3057;&#x305F;&#x308A;&#x3001;&#x8CBC;&#x308A;&#x4ED8;&#x3051;&#x3066;&#x5FA9;&#x5143;&#x3067;&#x304D;&#x307E;&#x3059;&#x3002;
+            </p>
 
-            <label class="field-label" for="backupOutput">バックアップ文字列</label>
+            <label class="field-label" for="backupOutput">
+              &#x30D0;&#x30C3;&#x30AF;&#x30A2;&#x30C3;&#x30D7;&#x6587;&#x5B57;&#x5217;
+            </label>
             <textarea
               id="backupOutput"
               class="field-textarea mono-text backup-string-textarea"
@@ -83,13 +172,21 @@
               wrap="soft"
               spellcheck="false"
             ></textarea>
-            <p id="backupLengthInfo" class="length-info">生成文字数: 0 文字</p>
+            <p id="backupLengthInfo" class="length-info">
+              &#x751F;&#x6210;&#x6587;&#x5B57;&#x6570;: 0 &#x6587;&#x5B57;
+            </p>
             <div class="button-row">
-              <button id="generateBackupButton" class="pill-button primary" type="button">文字列作成</button>
-              <button id="copyBackupButton" class="pill-button secondary" type="button">文字列コピー</button>
+              <button id="generateBackupButton" class="pill-button primary" type="button">
+                &#x6587;&#x5B57;&#x5217;&#x3092;&#x751F;&#x6210;
+              </button>
+              <button id="copyBackupButton" class="pill-button secondary" type="button">
+                &#x30B3;&#x30D4;&#x30FC;
+              </button>
             </div>
 
-            <label class="field-label" for="restoreInput">復元用文字列</label>
+            <label class="field-label" for="restoreInput">
+              &#x5FA9;&#x5143;&#x7528;&#x6587;&#x5B57;&#x5217;
+            </label>
             <textarea
               id="restoreInput"
               class="field-textarea mono-text backup-string-textarea"
@@ -102,18 +199,65 @@
               autocomplete="off"
               inputmode="text"
             ></textarea>
-            <p id="restoreLengthInfo" class="length-info">貼り付け文字数: 0 文字 / 正規化後: 0 文字</p>
-            <button id="restoreButton" class="pill-button danger full-width" type="button">貼り付け文字列から復元（全置換え）</button>
+            <p id="restoreLengthInfo" class="length-info">
+              &#x8CBC;&#x308A;&#x4ED8;&#x3051;&#x6587;&#x5B57;&#x6570;: 0 &#x6587;&#x5B57; /
+              &#x6B63;&#x898F;&#x5316;&#x5F8C;: 0 &#x6587;&#x5B57;
+            </p>
+            <button id="restoreButton" class="pill-button danger full-width" type="button">
+              &#x3053;&#x306E;&#x6587;&#x5B57;&#x5217;&#x304B;&#x3089;&#x5FA9;&#x5143;&#x3059;&#x308B;&#xFF08;&#x73FE;&#x5728;&#x306E;&#x5185;&#x5BB9;&#x306F;&#x4E0A;&#x66F8;&#x304D;&#xFF09;
+            </button>
             <p id="settingsError" class="form-error hidden" role="alert"></p>
           </section>
 
           <section id="updatePanel" class="panel update-panel">
-            <h2 class="panel-title">アプリ更新</h2>
-            <p id="updateStatusText" class="update-status">更新状態を確認中です。</p>
-            <button id="applyUpdateButton" class="pill-button primary full-width" type="button" disabled>更新する</button>
+            <h2 class="panel-title">&#x30A2;&#x30D7;&#x30EA;&#x66F4;&#x65B0;</h2>
+            <p id="updateStatusText" class="update-status">
+              &#x66F4;&#x65B0;&#x72B6;&#x6CC1;&#x3092;&#x78BA;&#x8A8D;&#x4E2D;&#x3067;&#x3059;&#x3002;
+            </p>
+            <button id="applyUpdateButton" class="pill-button primary full-width" type="button" disabled>
+              &#x66F4;&#x65B0;&#x3059;&#x308B;
+            </button>
           </section>
         </section>
       </main>
+    </div>
+
+    <div
+      id="photoViewer"
+      class="photo-viewer hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-hidden="true"
+      aria-label="&#x753B;&#x50CF;&#x8868;&#x793A;"
+    >
+      <button
+        id="closePhotoViewerButton"
+        class="photo-viewer-close"
+        type="button"
+        aria-label="&#x9589;&#x3058;&#x308B;"
+      >
+        &#x2715;
+      </button>
+      <button
+        id="photoViewerPrevButton"
+        class="photo-viewer-nav photo-viewer-prev"
+        type="button"
+        aria-label="&#x524D;&#x306E;&#x753B;&#x50CF;"
+      >
+        &#x2039;
+      </button>
+      <div id="photoViewerViewport" class="photo-viewer-viewport">
+        <div id="photoViewerTrack" class="photo-viewer-track"></div>
+      </div>
+      <button
+        id="photoViewerNextButton"
+        class="photo-viewer-nav photo-viewer-next"
+        type="button"
+        aria-label="&#x6B21;&#x306E;&#x753B;&#x50CF;"
+      >
+        &#x203A;
+      </button>
+      <div id="photoViewerCounter" class="photo-viewer-counter"></div>
     </div>
 
     <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>

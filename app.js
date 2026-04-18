@@ -10,8 +10,16 @@ const TARGET_PHOTO_BYTES = 1024 * 1024;
 const state = {
   books: [],
   editingBookId: null,
+  detailBookId: null,
+  detailPhotoIndex: 0,
   draftPhotos: [],
   currentView: "list",
+  formReturnView: "list",
+  formReturnBookId: null,
+  viewerPhotos: [],
+  viewerIndex: 0,
+  suppressViewerClickUntil: 0,
+  pendingDetailBookId: null,
   toastTimer: null,
   swRegistration: null,
   swUpdateReady: false,
@@ -29,6 +37,8 @@ const elements = {
   checkUpdateButton: document.getElementById("checkUpdateButton"),
   openSettingsButton: document.getElementById("openSettingsButton"),
   listView: document.getElementById("listView"),
+  detailView: document.getElementById("detailView"),
+  detailCard: document.getElementById("detailCard"),
   formView: document.getElementById("formView"),
   settingsView: document.getElementById("settingsView"),
   bookListContainer: document.getElementById("bookListContainer"),
@@ -55,6 +65,13 @@ const elements = {
   updatePanel: document.getElementById("updatePanel"),
   updateStatusText: document.getElementById("updateStatusText"),
   applyUpdateButton: document.getElementById("applyUpdateButton"),
+  photoViewer: document.getElementById("photoViewer"),
+  closePhotoViewerButton: document.getElementById("closePhotoViewerButton"),
+  photoViewerPrevButton: document.getElementById("photoViewerPrevButton"),
+  photoViewerNextButton: document.getElementById("photoViewerNextButton"),
+  photoViewerViewport: document.getElementById("photoViewerViewport"),
+  photoViewerTrack: document.getElementById("photoViewerTrack"),
+  photoViewerCounter: document.getElementById("photoViewerCounter"),
   toast: document.getElementById("toast")
 };
 
@@ -75,7 +92,7 @@ async function initializeApp() {
 
 function attachEvents() {
   elements.backButton.addEventListener("click", () => {
-    showView("list");
+    handleBackAction();
   });
 
   elements.addBookButton.addEventListener("click", () => {
@@ -105,7 +122,33 @@ function attachEvents() {
       showToast("対象の記録が見つかりません");
       return;
     }
-    openFormForEdit(book);
+    openDetailView(book);
+  });
+
+  elements.detailCard.addEventListener("click", (event) => {
+    const editButton = event.target.closest(".detail-edit-button");
+    if (editButton) {
+      const book = findBookById(state.detailBookId);
+      if (book) {
+        openFormForEdit(book);
+      }
+      return;
+    }
+
+    const navButton = event.target.closest(".detail-carousel-button");
+    if (navButton) {
+      if (navButton.dataset.direction === "prev") {
+        moveDetailPhotoIndex(-1);
+      } else if (navButton.dataset.direction === "next") {
+        moveDetailPhotoIndex(1);
+      }
+      return;
+    }
+
+    const dotButton = event.target.closest(".detail-dot-button");
+    if (dotButton) {
+      updateDetailPhotoIndex(Number(dotButton.dataset.index || 0));
+    }
   });
 
   elements.bookForm.addEventListener("submit", async (event) => {
@@ -165,13 +208,59 @@ function attachEvents() {
   elements.applyUpdateButton.addEventListener("click", async () => {
     await applyServiceWorkerUpdate();
   });
+
+  elements.closePhotoViewerButton.addEventListener("click", () => {
+    closePhotoViewer();
+  });
+
+  elements.photoViewerPrevButton.addEventListener("click", () => {
+    movePhotoViewerIndex(-1);
+  });
+
+  elements.photoViewerNextButton.addEventListener("click", () => {
+    movePhotoViewerIndex(1);
+  });
+
+  elements.photoViewer.addEventListener("click", (event) => {
+    if (event.target === elements.photoViewer) {
+      closePhotoViewer();
+    }
+  });
+
+  attachHorizontalSwipe(elements.photoViewerViewport, {
+    onPrevious: () => movePhotoViewerIndex(-1),
+    onNext: () => movePhotoViewerIndex(1)
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (elements.photoViewer.classList.contains("hidden")) {
+      return;
+    }
+    if (event.key === "Escape") {
+      closePhotoViewer();
+    } else if (event.key === "ArrowLeft") {
+      movePhotoViewerIndex(-1);
+    } else if (event.key === "ArrowRight") {
+      movePhotoViewerIndex(1);
+    }
+  });
 }
 
 function showView(viewName) {
+  if (viewName === "list" && state.pendingDetailBookId) {
+    const pendingBook = findBookById(state.pendingDetailBookId);
+    state.pendingDetailBookId = null;
+    if (pendingBook) {
+      openDetailView(pendingBook);
+      return;
+    }
+  }
+
   state.currentView = viewName;
 
   const visibilityMap = {
     list: elements.listView,
+    detail: elements.detailView,
     form: elements.formView,
     settings: elements.settingsView
   };
@@ -202,6 +291,8 @@ function showView(viewName) {
 
 function openFormForCreate() {
   state.editingBookId = null;
+  state.formReturnView = "list";
+  state.formReturnBookId = null;
   state.draftPhotos = [];
   elements.bookForm.reset();
   elements.formTitle.textContent = "新しい記録";
@@ -213,6 +304,8 @@ function openFormForCreate() {
 
 function openFormForEdit(book) {
   state.editingBookId = book.id;
+  state.formReturnView = state.currentView === "detail" ? "detail" : "list";
+  state.formReturnBookId = book.id;
   state.draftPhotos = clonePhotos(book.photos);
   elements.formTitle.textContent = "記録を編集";
   elements.deleteFromFormButton.classList.remove("hidden");
@@ -227,6 +320,455 @@ function openFormForEdit(book) {
 
   renderPhotoPreviewList();
   showView("form");
+}
+
+function handleBackAction() {
+  if (!elements.photoViewer.classList.contains("hidden")) {
+    closePhotoViewer();
+    return;
+  }
+
+  if (state.currentView === "form") {
+    if (state.formReturnView === "detail") {
+      const book = findBookById(state.formReturnBookId);
+      if (book) {
+        openDetailView(book, { preservePhotoIndex: true });
+        return;
+      }
+    }
+    showView("list");
+    return;
+  }
+
+  showView("list");
+}
+
+function openDetailView(book, options = {}) {
+  if (!book) {
+    return;
+  }
+
+  const preservePhotoIndex = Boolean(options.preservePhotoIndex) && state.detailBookId === book.id;
+  state.detailBookId = book.id;
+  if (!preservePhotoIndex) {
+    state.detailPhotoIndex = 0;
+  }
+
+  renderDetailView(book);
+  showView("detail");
+  elements.headerTitle.textContent = book.title || "\u611f\u60f3\u30ab\u30fc\u30c9";
+  elements.headerTitle.classList.remove("home-title");
+}
+
+function renderDetailView(book = findBookById(state.detailBookId)) {
+  if (!book) {
+    state.detailBookId = null;
+    showView("list");
+    return;
+  }
+
+  const photos = Array.isArray(book.photos) ? book.photos : [];
+  if (photos.length === 0) {
+    state.detailPhotoIndex = 0;
+  } else if (state.detailPhotoIndex > photos.length - 1) {
+    state.detailPhotoIndex = photos.length - 1;
+  }
+
+  elements.detailCard.innerHTML = "";
+
+  const header = document.createElement("div");
+  header.className = "detail-card-header";
+
+  const heading = document.createElement("div");
+  heading.className = "detail-heading";
+
+  const datePill = document.createElement("p");
+  datePill.className = "detail-date-pill";
+  datePill.textContent = formatDetailDateRange(book.startDate, book.endDate);
+
+  const title = document.createElement("h2");
+  title.className = "detail-card-title";
+  title.textContent = book.title || "\u7121\u984C";
+
+  const author = document.createElement("p");
+  author.className = "detail-card-author";
+  author.textContent = book.author || "\u8457\u8005\u672A\u5165\u529B";
+
+  heading.appendChild(datePill);
+  heading.appendChild(title);
+  heading.appendChild(author);
+
+  const editButton = document.createElement("button");
+  editButton.type = "button";
+  editButton.className = "circle-button detail-edit-button";
+  editButton.setAttribute("aria-label", "\u518d\u7de8\u96c6");
+  editButton.textContent = "\u270E";
+
+  header.appendChild(heading);
+  header.appendChild(editButton);
+  elements.detailCard.appendChild(header);
+
+  const metaGrid = document.createElement("div");
+  metaGrid.className = "detail-meta-grid";
+  metaGrid.appendChild(createDetailMetaItem("\u8aad\u307f\u59cb\u3081", formatDetailDate(book.startDate)));
+  metaGrid.appendChild(createDetailMetaItem("\u8aad\u307F\u7D42\u3048", book.endDate ? formatDetailDate(book.endDate) : "\u8AAD\u66F8\u4E2D"));
+  metaGrid.appendChild(createDetailMetaItem("\u671F\u9593", calculateDaysText(book.startDate, book.endDate)));
+  metaGrid.appendChild(createDetailMetaItem("\u753B\u50CF", `${photos.length}\u679A`));
+  elements.detailCard.appendChild(metaGrid);
+
+  if (photos.length > 0) {
+    const gallery = document.createElement("section");
+    gallery.className = "detail-gallery";
+
+    const galleryHeader = document.createElement("div");
+    galleryHeader.className = "detail-section-header";
+
+    const galleryTitle = document.createElement("h3");
+    galleryTitle.className = "detail-section-title";
+    galleryTitle.textContent = "\u753B\u50CF";
+
+    const galleryHint = document.createElement("p");
+    galleryHint.className = "detail-gallery-hint";
+    galleryHint.textContent = photos.length > 1
+      ? "\u5DE6\u53F3\u306B\u30B9\u30EF\u30A4\u30D7\u3001\u9577\u62BC\u3057\u3067\u5168\u753B\u9762"
+      : "\u9577\u62BC\u3057\u3067\u5168\u753B\u9762";
+
+    galleryHeader.appendChild(galleryTitle);
+    galleryHeader.appendChild(galleryHint);
+    gallery.appendChild(galleryHeader);
+
+    const viewport = document.createElement("div");
+    viewport.className = "detail-photo-viewport";
+
+    const track = document.createElement("div");
+    track.className = "detail-photo-track";
+
+    photos.forEach((photo, index) => {
+      const slide = document.createElement("div");
+      slide.className = "detail-photo-slide";
+
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "detail-photo-button";
+      button.setAttribute("aria-label", `\u753B\u50CF ${index + 1}`);
+
+      const image = document.createElement("img");
+      image.src = photo.dataUrl;
+      image.alt = `${book.title || "\u753B\u50CF"} ${index + 1}`;
+      image.loading = "lazy";
+
+      button.appendChild(image);
+      slide.appendChild(button);
+      track.appendChild(slide);
+      attachPhotoOpenInteractions(button, photos, index);
+    });
+
+    viewport.appendChild(track);
+    gallery.appendChild(viewport);
+
+    if (photos.length > 1) {
+      const prevButton = document.createElement("button");
+      prevButton.type = "button";
+      prevButton.className = "detail-carousel-button detail-carousel-prev";
+      prevButton.dataset.direction = "prev";
+      prevButton.setAttribute("aria-label", "\u524D\u306E\u753B\u50CF");
+      prevButton.textContent = "\u2039";
+
+      const nextButton = document.createElement("button");
+      nextButton.type = "button";
+      nextButton.className = "detail-carousel-button detail-carousel-next";
+      nextButton.dataset.direction = "next";
+      nextButton.setAttribute("aria-label", "\u6B21\u306E\u753B\u50CF");
+      nextButton.textContent = "\u203A";
+
+      const footer = document.createElement("div");
+      footer.className = "detail-carousel-footer";
+
+      const counter = document.createElement("p");
+      counter.className = "detail-carousel-counter";
+
+      const dots = document.createElement("div");
+      dots.className = "detail-dot-row";
+
+      photos.forEach((_photo, index) => {
+        const dotButton = document.createElement("button");
+        dotButton.type = "button";
+        dotButton.className = "detail-dot-button";
+        dotButton.dataset.index = String(index);
+        dotButton.setAttribute("aria-label", `\u753B\u50CF ${index + 1} \u3078`);
+        dots.appendChild(dotButton);
+      });
+
+      footer.appendChild(counter);
+      footer.appendChild(dots);
+
+      gallery.appendChild(prevButton);
+      gallery.appendChild(nextButton);
+      gallery.appendChild(footer);
+
+      attachHorizontalSwipe(viewport, {
+        onPrevious: () => moveDetailPhotoIndex(-1),
+        onNext: () => moveDetailPhotoIndex(1)
+      });
+    }
+
+    elements.detailCard.appendChild(gallery);
+  } else {
+    const emptyPhotos = document.createElement("div");
+    emptyPhotos.className = "detail-empty-photos";
+    emptyPhotos.textContent = "\u753B\u50CF\u306F\u307E\u3060\u3042\u308A\u307E\u305B\u3093";
+    elements.detailCard.appendChild(emptyPhotos);
+  }
+
+  const reviewSection = document.createElement("section");
+  reviewSection.className = "detail-review-section";
+
+  const reviewTitle = document.createElement("h3");
+  reviewTitle.className = "detail-section-title";
+  reviewTitle.textContent = "\u611F\u60F3";
+
+  const reviewText = document.createElement("p");
+  reviewText.className = "detail-review-text";
+  reviewText.textContent = book.review || "\u307E\u3060\u611F\u60F3\u306F\u66F8\u304B\u308C\u3066\u3044\u307E\u305B\u3093";
+
+  reviewSection.appendChild(reviewTitle);
+  reviewSection.appendChild(reviewText);
+  elements.detailCard.appendChild(reviewSection);
+
+  const updatedAt = document.createElement("p");
+  updatedAt.className = "detail-updated-at";
+  updatedAt.textContent = `\u6700\u7D42\u66F4\u65B0: ${formatDetailTimestamp(book.updatedAt)}`;
+  elements.detailCard.appendChild(updatedAt);
+
+  updateDetailPhotoIndex(state.detailPhotoIndex);
+}
+
+function createDetailMetaItem(labelText, valueText) {
+  const item = document.createElement("div");
+  item.className = "detail-meta-item";
+
+  const label = document.createElement("p");
+  label.className = "detail-meta-label";
+  label.textContent = labelText;
+
+  const value = document.createElement("p");
+  value.className = "detail-meta-value";
+  value.textContent = valueText;
+
+  item.appendChild(label);
+  item.appendChild(value);
+  return item;
+}
+
+function moveDetailPhotoIndex(step) {
+  updateDetailPhotoIndex(state.detailPhotoIndex + step);
+}
+
+function updateDetailPhotoIndex(nextIndex) {
+  const book = findBookById(state.detailBookId);
+  const photos = book && Array.isArray(book.photos) ? book.photos : [];
+  if (photos.length === 0) {
+    state.detailPhotoIndex = 0;
+    return;
+  }
+
+  const maxIndex = photos.length - 1;
+  state.detailPhotoIndex = Math.max(0, Math.min(maxIndex, nextIndex));
+  updateDetailCarousel(photos.length);
+}
+
+function updateDetailCarousel(photoCount) {
+  const track = elements.detailCard.querySelector(".detail-photo-track");
+  if (!track) {
+    return;
+  }
+
+  track.style.transform = `translateX(-${state.detailPhotoIndex * 100}%)`;
+
+  const counter = elements.detailCard.querySelector(".detail-carousel-counter");
+  if (counter) {
+    counter.textContent = `${state.detailPhotoIndex + 1} / ${photoCount}`;
+  }
+
+  const prevButton = elements.detailCard.querySelector('.detail-carousel-button[data-direction="prev"]');
+  const nextButton = elements.detailCard.querySelector('.detail-carousel-button[data-direction="next"]');
+  if (prevButton) {
+    prevButton.disabled = state.detailPhotoIndex <= 0;
+  }
+  if (nextButton) {
+    nextButton.disabled = state.detailPhotoIndex >= photoCount - 1;
+  }
+
+  elements.detailCard.querySelectorAll(".detail-dot-button").forEach((dotButton, index) => {
+    dotButton.classList.toggle("is-active", index === state.detailPhotoIndex);
+  });
+}
+
+function attachPhotoOpenInteractions(button, photos, index) {
+  let holdTimer = 0;
+  let touchOrigin = null;
+
+  const clearHoldTimer = () => {
+    if (holdTimer) {
+      window.clearTimeout(holdTimer);
+      holdTimer = 0;
+    }
+  };
+
+  button.addEventListener("touchstart", (event) => {
+    if (event.touches.length !== 1) {
+      return;
+    }
+    const touch = event.touches[0];
+    touchOrigin = { x: touch.clientX, y: touch.clientY };
+    clearHoldTimer();
+    holdTimer = window.setTimeout(() => {
+      state.suppressViewerClickUntil = Date.now() + 700;
+      openPhotoViewer(photos, index);
+    }, 380);
+  }, { passive: true });
+
+  button.addEventListener("touchmove", (event) => {
+    if (!touchOrigin || event.touches.length !== 1) {
+      clearHoldTimer();
+      return;
+    }
+    const touch = event.touches[0];
+    if (
+      Math.abs(touch.clientX - touchOrigin.x) > 12 ||
+      Math.abs(touch.clientY - touchOrigin.y) > 12
+    ) {
+      clearHoldTimer();
+    }
+  }, { passive: true });
+
+  button.addEventListener("touchend", () => {
+    clearHoldTimer();
+    touchOrigin = null;
+  });
+
+  button.addEventListener("touchcancel", () => {
+    clearHoldTimer();
+    touchOrigin = null;
+  });
+
+  button.addEventListener("click", (event) => {
+    if (Date.now() < state.suppressViewerClickUntil) {
+      event.preventDefault();
+      return;
+    }
+    openPhotoViewer(photos, index);
+  });
+}
+
+function attachHorizontalSwipe(target, handlers) {
+  if (!target) {
+    return;
+  }
+
+  let touchOrigin = null;
+
+  target.addEventListener("touchstart", (event) => {
+    if (event.touches.length !== 1) {
+      return;
+    }
+    const touch = event.touches[0];
+    touchOrigin = { x: touch.clientX, y: touch.clientY };
+  }, { passive: true });
+
+  target.addEventListener("touchend", (event) => {
+    if (!touchOrigin || event.changedTouches.length !== 1) {
+      touchOrigin = null;
+      return;
+    }
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - touchOrigin.x;
+    const deltaY = touch.clientY - touchOrigin.y;
+    touchOrigin = null;
+
+    if (Math.abs(deltaX) < 48 || Math.abs(deltaX) < Math.abs(deltaY)) {
+      return;
+    }
+
+    state.suppressViewerClickUntil = Date.now() + 350;
+    if (deltaX > 0) {
+      handlers.onPrevious();
+    } else {
+      handlers.onNext();
+    }
+  }, { passive: true });
+
+  target.addEventListener("touchcancel", () => {
+    touchOrigin = null;
+  });
+}
+
+function openPhotoViewer(photos, startIndex = 0) {
+  if (!Array.isArray(photos) || photos.length === 0) {
+    return;
+  }
+
+  state.viewerPhotos = clonePhotos(photos);
+  state.viewerIndex = Math.max(0, Math.min(state.viewerPhotos.length - 1, startIndex));
+
+  renderPhotoViewer();
+  elements.photoViewer.classList.remove("hidden");
+  elements.photoViewer.setAttribute("aria-hidden", "false");
+  document.body.classList.add("viewer-open");
+  updatePhotoViewer();
+}
+
+function closePhotoViewer() {
+  state.viewerPhotos = [];
+  state.viewerIndex = 0;
+  elements.photoViewer.classList.add("hidden");
+  elements.photoViewer.setAttribute("aria-hidden", "true");
+  elements.photoViewerTrack.innerHTML = "";
+  document.body.classList.remove("viewer-open");
+}
+
+function renderPhotoViewer() {
+  elements.photoViewerTrack.innerHTML = "";
+
+  const fragment = document.createDocumentFragment();
+  state.viewerPhotos.forEach((photo, index) => {
+    const slide = document.createElement("div");
+    slide.className = "photo-viewer-slide";
+
+    const image = document.createElement("img");
+    image.src = photo.dataUrl;
+    image.alt = `fullscreen photo ${index + 1}`;
+
+    slide.appendChild(image);
+    fragment.appendChild(slide);
+  });
+
+  elements.photoViewerTrack.appendChild(fragment);
+}
+
+function movePhotoViewerIndex(step) {
+  if (state.viewerPhotos.length === 0) {
+    return;
+  }
+
+  const maxIndex = state.viewerPhotos.length - 1;
+  state.viewerIndex = Math.max(0, Math.min(maxIndex, state.viewerIndex + step));
+  updatePhotoViewer();
+}
+
+function updatePhotoViewer() {
+  const photoCount = state.viewerPhotos.length;
+  if (photoCount === 0) {
+    return;
+  }
+
+  elements.photoViewerTrack.style.transform = `translateX(-${state.viewerIndex * 100}%)`;
+  elements.photoViewerCounter.textContent = `${state.viewerIndex + 1} / ${photoCount}`;
+  elements.photoViewerPrevButton.disabled = state.viewerIndex <= 0;
+  elements.photoViewerNextButton.disabled = state.viewerIndex >= photoCount - 1;
+  elements.photoViewerPrevButton.classList.toggle("hidden", photoCount <= 1);
+  elements.photoViewerNextButton.classList.toggle("hidden", photoCount <= 1);
 }
 
 async function saveForm() {
@@ -269,6 +811,7 @@ async function saveForm() {
     updatedAt: now
   };
 
+  state.pendingDetailBookId = book.id;
   await dbPut(book);
   await refreshBooks();
   showToast("保存しました");
@@ -372,6 +915,16 @@ async function refreshBooks() {
   const books = await dbGetAll();
   state.books = sortBooks(books);
   renderBookList();
+
+  if (state.detailBookId) {
+    const currentBook = findBookById(state.detailBookId);
+    if (currentBook) {
+      renderDetailView(currentBook);
+    } else if (state.currentView === "detail") {
+      state.detailBookId = null;
+      showView("list");
+    }
+  }
 }
 
 function renderBookList() {
@@ -400,7 +953,10 @@ function renderBookList() {
     row.type = "button";
     row.className = "book-row";
     row.dataset.id = book.id;
+    row.setAttribute("aria-label", `${book.title || "\u8A18\u9332"} \u3092\u8868\u793A`);
     row.setAttribute("aria-label", `${book.title}を編集`);
+
+    row.setAttribute("aria-label", `${book.title || "\u8A18\u9332"} \u3092\u8868\u793A`);
 
     const startDate = document.createElement("div");
     startDate.className = "book-start-date";
@@ -508,6 +1064,60 @@ function formatDateForDisplay(dateText) {
     return dateText;
   }
   return `${monthNumber}/${dayNumber}`;
+}
+
+function formatDetailDate(dateText) {
+  if (!dateText) {
+    return "\u672A\u8A18\u5165";
+  }
+
+  const date = new Date(`${dateText}T00:00:00`);
+  if (Number.isNaN(date.getTime())) {
+    return dateText;
+  }
+
+  return new Intl.DateTimeFormat("ja-JP", {
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  }).format(date);
+}
+
+function formatDetailDateRange(startDate, endDate) {
+  if (!startDate) {
+    return "\u65E5\u4ED8\u672A\u8A18\u5165";
+  }
+
+  const startText = formatDateForDisplay(startDate);
+  if (!endDate) {
+    return `${startText} \u304B\u3089`;
+  }
+
+  const endText = formatDateForDisplay(endDate);
+  if (startDate === endDate) {
+    return startText;
+  }
+
+  return `${startText} - ${endText}`;
+}
+
+function formatDetailTimestamp(timestamp) {
+  if (!Number.isFinite(timestamp)) {
+    return "-";
+  }
+
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
+
+  return new Intl.DateTimeFormat("ja-JP", {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(date);
 }
 
 function calculateDaysText(startDate, endDate) {
