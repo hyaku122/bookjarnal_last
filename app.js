@@ -955,7 +955,12 @@ function renderBookList() {
 
       const yearLabel = document.createElement("span");
       yearLabel.className = "year-heading-label";
-      yearLabel.textContent = `${year}\u5e74\u00a0\u00a0${yearCount}\u518a`;
+      yearLabel.textContent = `${year}\u5e74\u00a0\u00a0`;
+
+      const yearCountLabel = document.createElement("span");
+      yearCountLabel.className = "year-book-count";
+      yearCountLabel.textContent = `${yearCount}\u518a`;
+      yearLabel.appendChild(yearCountLabel);
       yearHeading.appendChild(yearLabel);
 
       if (year === currentYear) {

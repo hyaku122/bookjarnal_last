@@ -184,6 +184,10 @@ button {
   min-width: 0;
 }
 
+.year-book-count {
+  color: #d07d13;
+}
+
 .year-total-count {
   flex-shrink: 0;
   color: #e54878;
