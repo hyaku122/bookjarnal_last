@@ -1,4 +1,4 @@
-const CACHE_VERSION = "bookjournal-v6";
+const CACHE_VERSION = "bookjournal-v7";
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 
 const APP_SHELL = [

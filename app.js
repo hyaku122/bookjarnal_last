@@ -938,13 +938,33 @@ function renderBookList() {
 
   const fragment = document.createDocumentFragment();
   let previousYear = "";
+  const currentYear = String(new Date().getFullYear());
+  const totalBookCount = state.books.length;
+  const bookCountsByYear = state.books.reduce((counts, book) => {
+    const year = extractYear(book.startDate);
+    counts.set(year, (counts.get(year) || 0) + 1);
+    return counts;
+  }, new Map());
 
   state.books.forEach((book) => {
     const year = extractYear(book.startDate);
     if (year !== previousYear) {
+      const yearCount = bookCountsByYear.get(year) || 0;
       const yearHeading = document.createElement("h2");
       yearHeading.className = "year-heading";
-      yearHeading.textContent = `${year}年`;
+
+      const yearLabel = document.createElement("span");
+      yearLabel.className = "year-heading-label";
+      yearLabel.textContent = `${year}\u5e74\u00a0\u00a0${yearCount}\u518a`;
+      yearHeading.appendChild(yearLabel);
+
+      if (year === currentYear) {
+        const totalLabel = document.createElement("span");
+        totalLabel.className = "year-total-count";
+        totalLabel.textContent = `\u30c8\u30fc\u30bf\u30eb ${totalBookCount}\u518a`;
+        yearHeading.appendChild(totalLabel);
+      }
+
       fragment.appendChild(yearHeading);
       previousYear = year;
     }
