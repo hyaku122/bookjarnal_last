@@ -961,7 +961,7 @@ function renderBookList() {
       if (year === currentYear) {
         const totalLabel = document.createElement("span");
         totalLabel.className = "year-total-count";
-        totalLabel.textContent = `\u30c8\u30fc\u30bf\u30eb ${totalBookCount}\u518a`;
+        totalLabel.textContent = `Total ${totalBookCount}\u518a`;
         yearHeading.appendChild(totalLabel);
       }
 
